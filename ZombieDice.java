@@ -6,7 +6,8 @@ public class ZombieDice {
     
 
     final int NUM_DICE = 3;
-    final int MAX_SCORE = 20;
+    final int MAX_SCORE = 30;
+    final int WIN_SCORE = 13;
     public double[][][] pDiceRoll;
     public double[][] pExceed;
     public double[][][][][] pWin;
@@ -20,23 +21,23 @@ public class ZombieDice {
         pWin = new double[2][MAX_SCORE][MAX_SCORE][MAX_SCORE][NUM_DICE];
         
 
-        RollOutComeProb rollOutComeProb = new RollOutComeProb(false);
+        RollOutcomeProb rollOutComeProb = new RollOutcomeProb();
 
-        pDiceRoll = rollOutComeProb.getProb();
+        pDiceRoll = rollOutComeProb.getRollProb();
 
         
 
         //initialize pExceed with -1
-        for( int i = 0; i < 20 + 1; i ++){
-            for( int j = 0; j < 3; j ++){
+        for( int i = 0; i < MAX_SCORE; i ++){
+            for( int j = 0; j < NUM_DICE; j ++){
                 pExceed[i][j] = -1;
             }
         }
         
 
         //fill in pExceed
-        for( int i  = 0; i <= 20; i ++){
-            for( int j = 0; j < 3; j ++){
+        for( int i  = 0; i < MAX_SCORE; i ++){
+            for( int j = 0; j < NUM_DICE; j ++){
                 if( i == 0){
                     pExceed[i][j] = 1.0;
                 }
@@ -48,13 +49,13 @@ public class ZombieDice {
         
     }
 
-    //calculate pExceed at scoreDiff and sRolled number of shotgun rolled
+    // calculate pExceed at scoreDiff and sRolled number of shotgun rolled
     public double computepExceed( int scoreDiff, int sRolled ){
 
         //there will be a chance where player keeps rolling all dice with footstep.
         // Deal with this case by excluding that case out of calculation which lead to the specical rollOutCome where NUMBER_ALL_OUTCOMES_ORDERED is less by one
         
-        double[][][] pDiceRollSpecial = new RollOutComeProb(true).getProb();
+        double[][][] pDiceRollSpecial = new RollOutcomeProb().getRollProb();
         if(sRolled >= 3){
             return 0.0;
         }
@@ -68,7 +69,7 @@ public class ZombieDice {
                 for( int b = 0; b <= 3 - sg; b ++){
                     if( b != 0 || sg != 0){
                         int f = 3 - sg - b;
-                        pExceed[scoreDiff][sRolled] += pDiceRollSpecial[b][f][sg] * computepExceed( scoreDiff - b, sRolled + sg);
+                        pExceed[scoreDiff][sRolled] += pDiceRollSpecial[3][b][sg] * computepExceed( scoreDiff - b, sRolled + sg);
                     }
                 }
             }
@@ -78,34 +79,34 @@ public class ZombieDice {
 
 
     //This is my initial idea of calculating pExceed
-    /* 
-    public double computepExceed( int scoreDiff, int sRolled, double change ){
-        if( change <= 1e-14){
-            //there will be a chance where player keeps rolling all dice with footstep
-            //set it to 1 if the probability of it go smaller than 1e-14( a super small
-            //number )  to avoid infinite loop.
-            return 1.0;
-        }
-        if(sRolled >= 3){
-            return 0.0;
-        }
-        if( scoreDiff <= 0){
-            return 1.0;
-        }
+ 
+    // public double computepExceed( int scoreDiff, int sRolled, double change ){
+    //     if( change <= 1e-14){
+    //         //there will be a chance where player keeps rolling all dice with footstep
+    //         //set it to 1 if the probability of it go smaller than 1e-14( a super small
+    //         //number )  to avoid infinite loop.
+    //         return 1.0;
+    //     }
+    //     if(sRolled >= 3){
+    //         return 0.0;
+    //     }
+    //     if( scoreDiff <= 0){
+    //         return 1.0;
+    //     }
 
-        if( pExceed[scoreDiff][sRolled] == -1.0){
-            pExceed[scoreDiff][sRolled] = 0;
-            for( int sg = 0; sg <=3; sg ++){
-                for( int b = 0; b <= 3 - sg; b ++){
-                    int f = 3 - sg - b;
-                    double curChange = pDiceRoll[b][f][sg] * change;
-                    pExceed[scoreDiff][sRolled] += pDiceRoll[b][f][sg] * computepExceed( scoreDiff - b, sRolled + sg, curChange);
-                }
-            }
-        }
-        return pExceed[scoreDiff][sRolled];
-    }
-    */
+    //     if( pExceed[scoreDiff][sRolled] == -1.0){
+    //         pExceed[scoreDiff][sRolled] = 0;
+    //         for( int sg = 0; sg <=3; sg ++){
+    //             for( int b = 0; b <= 3 - sg; b ++){
+    //                 int f = 3 - sg - b;
+    //                 double curChange = pDiceRoll[3][b][sg] * change;
+    //                 pExceed[scoreDiff][sRolled] += pDiceRoll[3][b][sg] * computepExceed( scoreDiff - b, sRolled + sg, curChange);
+    //             }
+    //         }
+    //     }
+    //     return pExceed[scoreDiff][sRolled];
+    // }
+    
 
     public void valueIterate( )
     {
@@ -123,17 +124,17 @@ public class ZombieDice {
                                 if( turnTotal == 0){
                                     pHold = 0.0;
                                 }
-                                else if( curPlayer == 1 && curScore + turnTotal < opScore && opScore >= 10){
+                                else if( curPlayer == 1 && curScore + turnTotal < opScore && opScore >= WIN_SCORE){
                                     pHold = 0.0;
                                 }
-                                else if( curPlayer == 1 && curScore + turnTotal < opScore && opScore >= 10){
+                                else if( curPlayer == 1 && curScore + turnTotal > opScore && curScore + turnTotal >= WIN_SCORE){
                                     pHold = 1.0;
                                 }
                                 else{
                                     pHold = 1 - computeProbWin( 1 - curPlayer, opScore, curScore + turnTotal, 0, 0);
                                 }
                                 double pRoll = 0.0;
-                                if( curPlayer == 1 && opScore >= 10 && curScore + turnTotal < opScore){
+                                if( curPlayer == 1 && opScore >= WIN_SCORE && curScore + turnTotal < opScore){
                                     int scoreDiff = opScore - curScore - turnTotal;
                                     pRoll = pExceed[scoreDiff][sg];
                                 }
@@ -141,13 +142,13 @@ public class ZombieDice {
                                     for( int newSg = 0; newSg < NUM_DICE - sg; newSg ++){
                                         for( int newB = 0 ; newB <= NUM_DICE - newSg; newB ++){
                                             int f = 3 - newB - newSg;
-                                            pRoll += pDiceRoll[newB][f][newSg] * computeProbWin( curPlayer, curScore, opScore, turnTotal + newB, sg + newSg);
+                                            pRoll += pDiceRoll[3][newB][newSg] * computeProbWin( curPlayer, curScore, opScore, turnTotal + newB, sg + newSg);
                                         }
                                     }
                                     for( int newSg = 3 - sg; newSg <= NUM_DICE; newSg ++){
                                         for( int newB = 0 ; newB <= NUM_DICE - newSg; newB ++){
                                             int f = 3 - newB - newSg;
-                                            pRoll += pDiceRoll[newB][f][newSg] * (1 - computeProbWin( 1 - curPlayer, opScore, curScore, 0, 0) );
+                                            pRoll += pDiceRoll[3][newB][newSg] * (1 - computeProbWin( 1 - curPlayer, opScore, curScore, 0, 0) );
                                         }
                                     }
                                 }
@@ -166,14 +167,14 @@ public class ZombieDice {
     }
 
     public double computeProbWin( int curPlayer, int curScore, int opScore, int turnTotal, int sg ){
-        if( curPlayer == 0 && curScore >= 10){
+        if( curPlayer == 0 && curScore >= MAX_SCORE){
             return curScore >= opScore ? 1.0 : 0.0;
         }
-        if( curPlayer == 1 && curScore + turnTotal >= 10 && curScore + turnTotal > opScore){
+        if( curPlayer == 1 && curScore + turnTotal >= WIN_SCORE && curScore + turnTotal > opScore){
             return 1.0;
         }
-        if( curScore >= MAX_SCORE) curScore = 19;
-        if( opScore >= MAX_SCORE) opScore = 19;
+        if( curScore >= MAX_SCORE) curScore = MAX_SCORE - 1;
+        if( opScore >= MAX_SCORE) opScore = MAX_SCORE - 1;
         if( curScore + turnTotal >= MAX_SCORE) turnTotal = MAX_SCORE - 1 - curScore;
         return pWin[curPlayer][curScore][opScore][turnTotal][sg];
     }
@@ -184,51 +185,10 @@ public class ZombieDice {
         
         game.valueIterate();
         System.out.println("pWin[0][0][0][0][0]: " + game.pWin[0][0][0][0][0]);
-        System.out.println("pWin[0][1][0][0][0]: " + game.pWin[0][1][0][0][0]);
+        System.out.println("pWin[1][12][9][3][2]: " + game.pWin[1][12][9][3][2]);
         System.out.println("pExceed[4][2]: " + game.pExceed[4][2]);
         System.out.println("pDiceRoll[2][1][0]: " + game.pDiceRoll[2][1][0]);
         
-
-    }
-
-    public class RollOutComeProb{
-	    private final int MAX_CHOOSE = 3, NUM_DICE_ROLLED = 3, NUM_DIE_OUTCOMES = 3;
-	    private int[][] choose = new int[MAX_CHOOSE + 1][MAX_CHOOSE + 1];
-        private int NUM_ALL_OUTCOMES_ORDERED = (int) Math.pow(NUM_DIE_OUTCOMES, NUM_DICE_ROLLED);
-	    private double[][][] probBFS = new double[NUM_DIE_OUTCOMES + 1][NUM_DIE_OUTCOMES + 1][NUM_DIE_OUTCOMES + 1];
-        public RollOutComeProb(boolean special){
-            //Special case is the one to calculate pExceed
-            if(special == true){
-                NUM_ALL_OUTCOMES_ORDERED --;
-            }
-        }
-
-        //Pick K combination out of N objects.
-        private void calProb(){
-            for (int n = 0; n < choose.length; n++){
-                for (int k = 0; k <= n; k++) {
-                    if (k == 0)
-                        choose[n][k] = 1;
-                    else if (n == 0)
-                        choose[n][k] = 0;
-                    else
-                        choose[n][k] = choose[n - 1][k - 1] + choose[n - 1][k];
-                }
-            }
-            for( int b = 0; b <= NUM_DICE_ROLLED; b ++ ){
-                for( int f = 0; f <= NUM_DICE_ROLLED - b; f++ ){
-                    int s = NUM_DICE_ROLLED - b - f;
-				    int numRollOutcomes = choose[NUM_DICE_ROLLED][b] * choose[NUM_DICE_ROLLED - b][f];
-				    double prob = (double) numRollOutcomes / NUM_ALL_OUTCOMES_ORDERED;
-				    probBFS[b][f][s] = prob;
-                }
-            }
-
-        }
-        public double[][][] getProb(){
-            calProb();
-            return this.probBFS;
-        }
 
     }
         
