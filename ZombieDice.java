@@ -59,7 +59,7 @@ public class ZombieDice {
         if(sRolled >= 3){
             return 0.0;
         }
-        if( scoreDiff <= 0){
+        if( scoreDiff < 0){
             return 1.0;
         }
 
@@ -67,10 +67,11 @@ public class ZombieDice {
             pExceed[scoreDiff][sRolled] = 0;
             for( int sg = 0; sg <=3; sg ++){
                 for( int b = 0; b <= 3 - sg; b ++){
-                    if( b != 0 || sg != 0){
+                    //if( b != 0 || sg != 0){
                         int f = 3 - sg - b;
                         pExceed[scoreDiff][sRolled] += pDiceRollSpecial[3][b][sg] * computepExceed( scoreDiff - b, sRolled + sg);
-                    }
+                    
+                    //}
                 }
             }
         }
@@ -78,7 +79,7 @@ public class ZombieDice {
     }
 
 
-    //This is my initial idea of calculating pExceed
+    // This is my initial idea of calculating pExceed
  
     // public double computepExceed( int scoreDiff, int sRolled, double change ){
     //     if( change <= 1e-14){
@@ -186,7 +187,7 @@ public class ZombieDice {
         game.valueIterate();
         System.out.println("pWin[0][0][0][0][0]: " + game.pWin[0][0][0][0][0]);
         System.out.println("pWin[1][12][9][3][2]: " + game.pWin[1][12][9][3][2]);
-        System.out.println("pExceed[4][2]: " + game.pExceed[4][2]);
+        System.out.println("pExceed[0][2]: " + game.pExceed[0][2]);
         System.out.println("pDiceRoll[2][1][0]: " + game.pDiceRoll[2][1][0]);
         
 
